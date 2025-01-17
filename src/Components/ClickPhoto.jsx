@@ -6,6 +6,7 @@ import overlay from '../assets/final.png'
 const ClickPhoto = () => {
   const [background, setBackground] = useState(null); // State for selected model (background)
   const [photo, setPhoto] = useState(null); // State for captured photo
+  const [finalphoto , setFinalphoto] = useState(false);
 
 
   const models = [
@@ -32,24 +33,37 @@ const ClickPhoto = () => {
     }
   };
 
-//   const handleUploadPhoto = async () => {
-//     if (photo && background) {
-//       const formData = new FormData();
-//       formData.append('model', background); // Attach model as background
-//       formData.append('photo', photo); // Attach captured photo
-
-//       try {
-//         const response = await fetch('https://example.com/api/upload', {
-//           method: 'POST',
-//           body: formData,
-//         });
-//         const data = await response.json();
-//         console.log('Successfully uploaded:', data);
-//       } catch (error) {
-//         console.error('Error uploading photo:', error);
-//       }
-//     }
-//   };
+  const handleUploadPhoto = async () => {
+    if (photo && background) {
+        const formData = new FormData();
+        const fileInput = document.querySelector('input[type="file"]'); 
+        
+        formData.append('file', photo);
+        
+        fetch('https://www.cutout.pro/api/v1/matting?mattingType=6', {
+            method: 'POST',
+            headers: {
+                'APIKEY': 'ef719139e8e94de78af04f4f80b41fb1',
+            },
+            body: formData
+        })
+        .then(response => response.blob()) 
+        .then(blob => {
+            const imageUrl = URL.createObjectURL(blob);
+        
+            const imgElement = document.getElementById('output-image');
+            imgElement.src = imageUrl;
+            console.log(imageUrl);
+        
+            const processedImage = imageUrl;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+        
+        
+    }
+  };
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -89,7 +103,6 @@ const ClickPhoto = () => {
         </div>
       )}
 
-      {/* Show captured photo */}
       {photo && (
   <Card sx={{ width: '600px', minHeight:'100vh', maxWidth: '100%', margin: '0px auto' }}>
     {/* Container with background image */}
@@ -120,32 +133,15 @@ const ClickPhoto = () => {
         }}
       />
       {/* Overlay image */}
-      <img
-        src={overlay} 
-        alt="Overlay"
-        style={{
-          position: 'absolute', 
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '100%',  
-          height: 'auto',
-          zIndex: 2, 
-        }}
-      />
-
-      {/* Upload Button */}
-    
+      
     </div>
     <div style={{margin:'20px 0px'}}>
-        <Button variant="contained" color="secondary">
+        <Button variant="contained" color="secondary" onClick={handleUploadPhoto}>
           Upload Photo
         </Button>
       </div>
   </Card>
-  
 )}
-
       {/* Instruction */}
       <div style={{ marginTop: '20px' }}>
         <p>Select a model (background), then click "Open Camera" to capture your photo!</p>
