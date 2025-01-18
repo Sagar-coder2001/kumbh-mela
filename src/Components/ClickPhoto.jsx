@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { Button, Card } from '@mui/material';
-import bg from '../assets/demo1BG.jpg'
+import { Button, Card, TextField } from '@mui/material';
+import bg from '../assets/kumbghbg.jpg'
 import overlay from '../assets/final.png'
 
 const ClickPhoto = () => {
   const [background, setBackground] = useState(null); // State for selected model (background)
   const [photo, setPhoto] = useState(null); // State for captured photo
-  const [finalphoto , setFinalphoto] = useState(false);
-
+  const [finalphoto, setFinalphoto] = useState(false);
+  const [modelInput, setModelInput] = useState(''); // State for user input
+  const [camera, setshowcamera] = useState(false)
 
   const models = [
     'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww',
-    'https://images.unsplash.com/photo-1679673988162-018d0400240e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww', 
-    'https://media.istockphoto.com/id/1798500555/photo/happy-handsome-entrepreneur-aiming-thumb-at-copy-space-for-advertising-against-yellow.webp?a=1&b=1&s=612x612&w=0&k=20&c=0NZUkPmQk3l-Bu5cynmcENV_X3S5snd7B6MEOOlhY1Q=', 
+    'https://images.unsplash.com/photo-1679673988162-018d0400240e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww',
+    'https://media.istockphoto.com/id/1798500555/photo/happy-handsome-entrepreneur-aiming-thumb-at-copy-space-for-advertising-against-yellow.webp?a=1&b=1&s=612x612&w=0&k=20&c=0NZUkPmQk3l-Bu5cynmcENV_X3S5snd7B6MEOOlhY1Q=',
     'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww',
-    'https://images.unsplash.com/photo-1679673988162-018d0400240e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww', 
-    'https://media.istockphoto.com/id/1798500555/photo/happy-handsome-entrepreneur-aiming-thumb-at-copy-space-for-advertising-against-yellow.webp?a=1&b=1&s=612x612&w=0&k=20&c=0NZUkPmQk3l-Bu5cynmcENV_X3S5snd7B6MEOOlhY1Q=', 
+    'https://images.unsplash.com/photo-1679673988162-018d0400240e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww',
+    'https://media.istockphoto.com/id/1798500555/photo/happy-handsome-entrepreneur-aiming-thumb-at-copy-space-for-advertising-against-yellow.webp?a=1&b=1&s=612x612&w=0&k=20&c=0NZUkPmQk3l-Bu5cynmcENV_X3S5snd7B6MEOOlhY1Q=',
   ];
 
   const handleModelSelection = (index) => {
@@ -25,48 +26,63 @@ const ClickPhoto = () => {
   const handleCapturePhoto = (event) => {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result); // Save the captured photo
-      };
-      reader.readAsDataURL(file);
+      setPhoto(file); // Save the file directly
     }
   };
 
   const handleUploadPhoto = async () => {
     if (photo && background) {
-        const formData = new FormData();
-        const fileInput = document.querySelector('input[type="file"]'); 
-        
-        formData.append('file', photo);
-        
-        fetch('https://www.cutout.pro/api/v1/matting?mattingType=6', {
-            method: 'POST',
-            headers: {
-                'APIKEY': 'ef719139e8e94de78af04f4f80b41fb1',
-            },
-            body: formData
-        })
-        .then(response => response.blob()) 
-        .then(blob => {
-            const imageUrl = URL.createObjectURL(blob);
-        
-            const imgElement = document.getElementById('output-image');
-            imgElement.src = imageUrl;
-            console.log(imageUrl);
-        
-            const processedImage = imageUrl;
-        })
-        .catch(error => {
-            console.error('Error:', error);
+      const formData = new FormData();
+      formData.append('file', photo);
+  
+      try {
+        const response = await fetch('https://www.cutout.pro/api/v1/matting?mattingType=6', {
+          method: 'POST',
+          headers: {
+            'APIKEY': 'ef719139e8e94de78af04f4f80b41fb1',
+          },
+          body: formData,
         });
-        
-        
+  
+        if (!response.ok) {
+          throw new Error('Error uploading image');
+        }
+  
+        const resultBlob = await response.blob();
+        const imageUrl = URL.createObjectURL(resultBlob);
+  
+        // Set the processed image URL to the state
+        setPhoto(imageUrl);
+  
+        console.log(imageUrl); // Log the image URL to the console for debugging
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    } else {
+      alert('Please capture an image first.');
+    }
+  };
+  
+
+  const handleInputChange = (event) => {
+    setModelInput(event.target.value);
+  };
+
+  const handleModelInputSubmit = () => {
+    const modelIndex = parseInt(modelInput) - 1; // Convert to zero-based index
+    if (modelIndex >= 0 && modelIndex < models.length) {
+      setBackground(models[modelIndex]);
+      setshowcamera(true);
+    } else {
+      alert('Invalid input. Please enter a number between 1 and 6.');
     }
   };
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
+      {/* User Input for Model Selection */}
+
+
       {/* Model selection buttons */}
       <div style={{ marginBottom: '20px' }}>
         {models.map((model, index) => (
@@ -75,8 +91,13 @@ const ClickPhoto = () => {
             onClick={() => handleModelSelection(index)}
             variant="contained"
             color="primary"
-            style={{ margin: '10px' }}>
-            <img src={model} style={{ width: '80px', height: '80px', }} alt={`Model ${index + 1}`} />
+            style={{ margin: '10px' }}
+          >
+            <img
+              src={model}
+              style={{ width: '80px', height: '80px' }}
+              alt={`Model ${index + 1}`}
+            />
           </Button>
         ))}
       </div>
@@ -85,63 +106,147 @@ const ClickPhoto = () => {
       {background && !photo && (
         <div>
           <p>Model Selected</p>
-          <p>{background}</p>
-          {/* Capture photo button */}
-          <div style={{ marginTop: '20px' }}>
-            <input
-              type="file"
-              accept="image/*"
-              capture="camera"
-            //   style={{ display: 'none' }}
-              id="capture"
-              onChange={handleCapturePhoto}
-            />
-            <label htmlFor="capture">
-              <Button variant="contained" color="primary">Open Camera</Button>
-            </label>
+          <div>
+            <div>
+              <TextField
+                label="Enter model number (1-6)"
+                value={modelInput}
+                onChange={handleInputChange}
+                variant="outlined"
+                style={{ marginBottom: '20px' }}
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleModelInputSubmit}
+                sx={{margin:'10px'}}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      {photo && (
-  <Card sx={{ width: '600px', minHeight:'100vh', maxWidth: '100%', margin: '0px auto' }}>
-    {/* Container with background image */}
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh', // Adjust height to your requirements
-        position: 'relative',
-        backgroundImage: `url(${bg})`,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        objectFit: 'cover',
-      }}
-    >
-      {/* User's captured photo */}
-      <img
-        src={photo}
-        alt="Captured"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '100%', 
-          height: 'auto',
-          zIndex: 1,
-        }}
-      />
-      {/* Overlay image */}
-      
-    </div>
-    <div style={{margin:'20px 0px'}}>
-        <Button variant="contained" color="secondary" onClick={handleUploadPhoto}>
-          Upload Photo
-        </Button>
-      </div>
-  </Card>
-)}
+      {
+        camera && background &&(
+          <>
+           <input
+              type="file"
+              accept="image/*"
+              capture="camera"
+              id="capture"
+              onChange={handleCapturePhoto}
+            />
+            <label htmlFor="capture">
+              <Button variant="contained" color="primary">
+                Open Camera
+              </Button>
+            </label>
+          </>
+        )
+      }
+{photo && (
+        <>
+          <Card sx={{ width: '600px', minHeight: '100vh', maxWidth: '100%', margin: '10px auto' }}>
+            {/* Container with background image */}
+            <div
+              style={{
+                width: '100%',
+                minHeight: '100vh',
+                position: 'relative',
+                backgroundImage: `url(${bg})`,
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                objectFit: 'cover',
+              }}
+            >
+              {/* User's captured photo */}
+              <img
+                src={photo} // Display captured photo
+                alt="Captured"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '100%',
+                  height: 'auto',
+                  zIndex: 1,
+                }}
+              />
+              {/* Overlay image */}
+              <img
+                src={overlay}
+                alt=""
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '100%',
+                  height: 'auto',
+                  zIndex: 100,
+                  marginTop: '40px',
+                }}
+              />
+            </div>
+          </Card>
+
+          {/* Reflection Section */}
+          <Card sx={{ width: '600px', minHeight: '100vh', maxWidth: '100%', margin: '10px auto' }}>
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              minHeight: '100vh',
+              overflow: 'hidden',
+              zIndex: 5,
+              backgroundImage: `url(${bg})`,
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              objectFit: 'cover',
+            }}
+          >
+            {/* Reflection of the captured image */}
+            <img
+              src={photo} // Using the same captured photo for reflection
+              alt="Reflection"
+              style={{
+                position: 'absolute',
+                top: '0',
+                left: '50%',
+                transform: 'translateX(-50%) scaleY(-1)', // Mirroring the image
+                width: '100%',
+                height: 'auto',
+                zIndex: 1,
+                opacity: 0.4, // Make the reflection semi-transparent
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '0',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '100%',
+                height: '50%',
+                background: 'linear-gradient(to top, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0))', // Water effect
+                zIndex: 2,
+              }}
+            ></div>
+          </div>
+          </Card>
+          <div style={{ margin: '20px 0px' }}>
+            <Button variant="contained" color="secondary" onClick={handleUploadPhoto}>
+              Upload Photo
+            </Button>
+          </div>
+        </>
+      )}
+
       {/* Instruction */}
       <div style={{ marginTop: '20px' }}>
         <p>Select a model (background), then click "Open Camera" to capture your photo!</p>
