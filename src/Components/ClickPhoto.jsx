@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Card, TextField } from '@mui/material';
+import { Button, Card, CircularProgress, TextField } from '@mui/material';
 import bg from '../assets/kumbghbg.jpg'
 import overlay from '../assets/final.png'
 
@@ -9,6 +9,7 @@ const ClickPhoto = () => {
   const [finalphoto, setFinalphoto] = useState(false);
   const [modelInput, setModelInput] = useState(''); // State for user input
   const [camera, setshowcamera] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const models = [
     'https://plus.unsplash.com/premium_photo-1671656349322-41de944d259b?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmVhdXRpZnVsJTIwbWFufGVufDB8fDB8fHww',
@@ -31,10 +32,11 @@ const ClickPhoto = () => {
   };
 
   const handleUploadPhoto = async () => {
+    setLoading(true)
     if (photo && background) {
       const formData = new FormData();
       formData.append('file', photo);
-  
+
       try {
         const response = await fetch('https://www.cutout.pro/api/v1/matting?mattingType=6', {
           method: 'POST',
@@ -43,26 +45,29 @@ const ClickPhoto = () => {
           },
           body: formData,
         });
-  
+
         if (!response.ok) {
           throw new Error('Error uploading image');
         }
-  
+
         const resultBlob = await response.blob();
         const imageUrl = URL.createObjectURL(resultBlob);
-  
         // Set the processed image URL to the state
-        setPhoto(imageUrl);
-  
+        setFinalphoto(imageUrl);
+
         console.log(imageUrl); // Log the image URL to the console for debugging
       } catch (error) {
         console.error('Error:', error);
       }
-    } else {
+      finally{
+        setLoading(false);
+      }
+    } 
+    else {
       alert('Please capture an image first.');
     }
   };
-  
+
 
   const handleInputChange = (event) => {
     setModelInput(event.target.value);
@@ -119,7 +124,7 @@ const ClickPhoto = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleModelInputSubmit}
-                sx={{margin:'10px'}}
+                sx={{ margin: '10px' }}
               >
                 Submit
               </Button>
@@ -129,9 +134,9 @@ const ClickPhoto = () => {
       )}
 
       {
-        camera && background &&(
+        camera && background && (
           <>
-           <input
+            <input
               type="file"
               accept="image/*"
               capture="camera"
@@ -146,14 +151,53 @@ const ClickPhoto = () => {
           </>
         )
       }
-{photo && (
+
+{photo && !finalphoto && (
         <>
-          <Card sx={{ width: '600px', minHeight: '100vh', maxWidth: '100%', margin: '10px auto' }}>
+         <Card sx={{ width: '100%', maxWidth: '100%', minHeight:'100vh', margin: '10px auto', textAlign:'center' }}>
+          <div style={{ border: '1px solid', width: '100%', minHeight: '100vh', position: 'relative' }}>
+            <img
+              src={URL.createObjectURL(photo)}
+              alt="Captured"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '100%',
+                objectFit: 'cover',
+                zIndex: 1,
+              }}
+            />
+              {
+            loading && (
+              <>
+              <CircularProgress />
+              </>
+            )
+          }
+          </div>
+        
+          
+          </Card>
+          <div style={{ margin: '20px 0px' }}>
+        
+        <Button variant="contained" color="secondary" onClick={handleUploadPhoto}>
+          Upload Photo
+        </Button>
+      </div>
+        </>
+      )}
+
+
+
+      {finalphoto && (
+        <>
+          <Card sx={{ width: '100%', maxWidth: '100%', margin: '10px auto' }}>
             {/* Container with background image */}
             <div
               style={{
                 width: '100%',
-                minHeight: '100vh',
                 position: 'relative',
                 backgroundImage: `url(${bg})`,
                 backgroundRepeat: 'no-repeat',
@@ -163,39 +207,51 @@ const ClickPhoto = () => {
               }}
             >
               {/* User's captured photo */}
-              <img
-                src={photo} // Display captured photo
-                alt="Captured"
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '100%',
-                  height: 'auto',
-                  zIndex: 1,
-                }}
-              />
+              <div style={{ width: '100%', minHeight:'50vh', border:'1px solid', display:'flex', justifyContent:'center', alignItems:'center' }}>
+                <div style={{width:'300px', minHeight:'200px'}}>
+                <img
+                  src={finalphoto} // Display captured photo
+                  alt="Captured"
+                  style={{
+                    position: 'absolute',
+                    top: '20%',
+                    // left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '300px',
+                    height:'300px',
+                    objectFit:'cover',
+                    backgroundPosition:'center',
+                    backgroundSize:'cover',
+                    zIndex: 1,
+                  }}
+                />
+                </div>
+              </div>
+
               {/* Overlay image */}
+              <div style={{ width: '100%', minHeight:'50vh' }}>
               <img
-                src={overlay}
-                alt=""
+                src={finalphoto} // Using the same captured photo for reflection
+                alt="Reflection"
                 style={{
                   position: 'absolute',
-                  top: '50%',
+                  top: 'calc(50%)', // Position the reflection below the original image (you can adjust this offset)
                   left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '100%',
-                  height: 'auto',
-                  zIndex: 100,
-                  marginTop: '40px',
+                  transform: 'translateX(-50%) scaleY(-1)', // Mirroring the image vertically
+                  maxWidth: '300px',
+                  height:'250px',
+                  zIndex: 1,
+                  opacity: 0.4, // Make the reflection semi-transparent
+                  filter: 'blur(2px)', // Adding blur to make the reflection look like it's in water
                 }}
               />
+              </div>
+             
             </div>
           </Card>
 
           {/* Reflection Section */}
-          <Card sx={{ width: '600px', minHeight: '100vh', maxWidth: '100%', margin: '10px auto' }}>
+          {/* <Card sx={{ width: '600px', minHeight: '100vh', maxWidth: '100%', margin: '10px auto' }}>
           <div
             style={{
               position: 'relative',
@@ -210,19 +266,19 @@ const ClickPhoto = () => {
               objectFit: 'cover',
             }}
           >
-            {/* Reflection of the captured image */}
+          
             <img
-              src={photo} // Using the same captured photo for reflection
+              src={photo} 
               alt="Reflection"
               style={{
                 position: 'absolute',
                 top: '0',
                 left: '50%',
-                transform: 'translateX(-50%) scaleY(-1)', // Mirroring the image
+                transform: 'translateX(-50%) scaleY(-1)', 
                 width: '100%',
                 height: 'auto',
                 zIndex: 1,
-                opacity: 0.4, // Make the reflection semi-transparent
+                opacity: 0.4, 
               }}
             />
             <div
@@ -238,12 +294,8 @@ const ClickPhoto = () => {
               }}
             ></div>
           </div>
-          </Card>
-          <div style={{ margin: '20px 0px' }}>
-            <Button variant="contained" color="secondary" onClick={handleUploadPhoto}>
-              Upload Photo
-            </Button>
-          </div>
+          </Card> */}
+         
         </>
       )}
 
